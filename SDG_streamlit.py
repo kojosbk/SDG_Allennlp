@@ -152,7 +152,7 @@ def main():
                 else:
                     st.info(
                         f"""
-                            👆 Upload a .csv file first. Sample to try: [biostats.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/biostats.csv)
+                            👆 Upload a .csv file first. Sample to try: [Shelldata.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/biostats.csv)
                             """
                     )
 
