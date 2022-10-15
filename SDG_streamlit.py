@@ -8,6 +8,18 @@ import numpy as np
 import base64
 from  PIL import Image
 from streamlit_option_menu import option_menu
+import torch
+from transformers import BartTokenizer, BartForConditionalGeneration
+from transformers import T5Tokenizer, T5ForConditionalGeneration
+# from allennlp import pretrained
+import matplotlib.pyplot as plt
+
+
+###################################
+
+from functionforDownloadButtons import download_button
+
+###################################
 
 # Custom Libraries
 from utils.data_loader import load_movie_titles
@@ -48,7 +60,7 @@ def get_img_as_base64(file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-img = get_img_as_base64("image.jpg")
+img = get_img_as_base64("image.png")
 
 page_bg_img = f"""
 <style>
@@ -122,41 +134,201 @@ def main():
                     }
                     )
         if choose == "-Text summarisation":
-            raw_text = st.text_area("Enter Text Here")
-            summary_choice = st.selectbox("Summary Choice",["Allennlp","Genism"])
-            if st.button("Summarize"):
-                if summary_choice == "Allennlp":
-                    summary_result = summarize(raw_text)
-                    st.write(summary_result)
-            title_SOr = """
-            <div style="background-color:#eebd8a;padding:10px;border-radius:10px;margin:10px;border-style:solid; border-color:#000000; padding: 1em;">
-            <h3 style="color:black;text-align:center;">OR</h3>
-            """
-            st.markdown(title_SOr, unsafe_allow_html=True)
-            c29, c30, c31 = st.columns([1, 6, 1])
+            st.markdown('Using BART and T5 transformer model')
 
-            with c30:
+            model = st.selectbox('Select the model', ('T5', 'BART'))
 
-                uploaded_file = st.file_uploader(
-                    "",
-                    key="1",
-                    help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
-                )
+            if model == 'BART':
+                _num_beams = 4
+                _no_repeat_ngram_size = 3
+                _length_penalty = 1
+                _min_length = 12
+                _max_length = 128
+                _early_stopping = True
+            else:
+                _num_beams = 4
+                _no_repeat_ngram_size = 3
+                _length_penalty = 2
+                _min_length = 30
+                _max_length = 200
+                _early_stopping = True
 
-                if uploaded_file is not None:
-                    file_container = st.expander("Check your uploaded .csv")
-                    shows = pd.read_csv(uploaded_file)
-                    uploaded_file.seek(0)
-                    file_container.write(shows)
+            col1, col2, col3 = st.columns(3)
+            _num_beams = col1.number_input("num_beams", value=_num_beams)
+            _no_repeat_ngram_size = col2.number_input("no_repeat_ngram_size", value=_no_repeat_ngram_size)
+            _length_penalty = col3.number_input("length_penalty", value=_length_penalty)
+
+            col1, col2, col3 = st.columns(3)
+            _min_length = col1.number_input("min_length", value=_min_length)
+            _max_length = col2.number_input("max_length", value=_max_length)
+            _early_stopping = col3.number_input("early_stopping", value=_early_stopping)
+
+            text = st.text_area('Text Input')
+
+
+            def run_model(input_text):
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+                if model == "BART":
+                    bart_model = BartForConditionalGeneration.from_pretrained("facebook/bart-base")
+                    bart_tokenizer = BartTokenizer.from_pretrained("facebook/bart-base")
+                    input_text = str(input_text)
+                    input_text = ' '.join(input_text.split())
+                    input_tokenized = bart_tokenizer.encode(input_text, return_tensors='pt').to(device)
+                    summary_ids = bart_model.generate(input_tokenized,
+                                                    num_beams=_num_beams,
+                                                    no_repeat_ngram_size=_no_repeat_ngram_size,
+                                                    length_penalty=_length_penalty,
+                                                    min_length=_min_length,
+                                                    max_length=_max_length,
+                                                    early_stopping=_early_stopping)
+
+                    output = [bart_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in
+                            summary_ids]
+                    st.write('Summary')
+                    st.success(output[0])
 
                 else:
-                    st.info(
-                        f"""
-                            👆 Upload a .csv file first. Sample to try: [Shelldata.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/biostats.csv)
-                            """
+                    t5_model = T5ForConditionalGeneration.from_pretrained("t5-base")
+                    t5_tokenizer = T5Tokenizer.from_pretrained("t5-base")
+                    input_text = str(input_text).replace('\n', '')
+                    input_text = ' '.join(input_text.split())
+                    input_tokenized = t5_tokenizer.encode(input_text, return_tensors="pt").to(device)
+                    summary_task = torch.tensor([[21603, 10]]).to(device)
+                    input_tokenized = torch.cat([summary_task, input_tokenized], dim=-1).to(device)
+                    summary_ids = t5_model.generate(input_tokenized,
+                                                    num_beams=_num_beams,
+                                                    no_repeat_ngram_size=_no_repeat_ngram_size,
+                                                    length_penalty=_length_penalty,
+                                                    min_length=_min_length,
+                                                    max_length=_max_length,
+                                                    early_stopping=_early_stopping)
+                    output = [t5_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in
+                            summary_ids]
+                    st.write('Summary')
+                    st.success(output[0])
+
+
+            if st.button('Submit Text'):
+                run_model(text)
+
+            title_SOr = """
+            <div style="background-color:#eebd8a;padding:10px;border-radius:10px;margin:10px;border-style:solid; border-color:#000000; padding: 1em;">
+            <h3 style="color:black;text-align:center;">OR \nClick below to use a data frame that contains news stories on the Shell Corporation from various news sources.</h3>
+            """
+            st.markdown(title_SOr, unsafe_allow_html=True)
+            if st.button("Summarize Dataframe"):
+                st.write("Loading \----------------------")
+                device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+                t5_model = T5ForConditionalGeneration.from_pretrained("t5-base")
+                t5_tokenizer = T5Tokenizer.from_pretrained("t5-base")
+                data = pd.read_csv('guardian_publications.csv')
+                data = data.head(3)
+                data.drop(['Unnamed: 0', 'authors', 'title', 'authors', 'keywords', 'publish_date'], axis = 1, inplace = True) 
+                result = []
+                for i in range(len(data["text"])):
+                    result.append(str(data["text"][i]).replace('\n', ''))                    
+                data["input_text"] = result
+                result1 = []
+                for i in range(len(data["input_text"])):
+                    result1.append( ' '.join(data["input_text"][i].split()))                    
+                data["input_text"] = result1                    
+                result2 = []
+                for i in range(len(data["input_text"])):
+                    result2.append(t5_tokenizer.encode(data["input_text"][i], return_tensors="pt").to(device))                    
+                data["input_tokenized"] = result2                    
+                summary_task = torch.tensor([[21603, 10]]).to(device)
+                result3 = []
+                for i in range(len(data["input_tokenized"])):
+                    result3.append(torch.cat([summary_task, data["input_tokenized"][i]], dim=-1).to(device))                    
+                data["input_tokenized"] = result3
+                result4 = []
+                for i in range(len(data["input_tokenized"])):
+                    result4.append(t5_model.generate(data["input_tokenized"][i],
+                                                num_beams=_num_beams,
+                                                no_repeat_ngram_size=_no_repeat_ngram_size,
+                                                length_penalty=_length_penalty,
+                                                min_length=_min_length,
+                                                max_length=_max_length,
+                                                early_stopping=_early_stopping))                    
+                data["summary_ids"] = result4                     
+                result5 = []
+                for i in range(len(data["summary_ids"])):
+                    result5.append([t5_tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in
+                        data["summary_ids"][i]])                    
+                data["Summrized Text"] = result5   
+                st.write('Summary')
+                st.write(data[["Summrized Text","text"]])
+
+                df = pd.DataFrame(data[["Summrized Text","text"]])
+
+                c29, c30, c31 = st.columns([1, 1, 2])
+
+                with c29:
+
+                    CSVButton = download_button(
+                        df,
+                        "File.csv",
+                        "Download to CSV",
                     )
 
-                    st.stop()
+        if choose == "-Q n A":
+            st.markdown('Using BART and T5 transformer model')
+            st.header("AllenNLP Demo")
+            from allennlp.predictors.predictor import Predictor
+            # Load the pretrained BiDAF model for question answering.
+            # (It's big, don't do this over dial-up.)
+            # Use st.cache so that it doesn't reload when you change the inputs.
+            predictor = Predictor.from_path("C:/Users/Silas_Dell/Downloads/Compressed/bidaf-elmo.2021-02-11.tar_2.gz")
+                # ignore_hash=True  # the Predictor is not hashable
+
+
+            # Create a text area to input the passage.
+            passage = st.text_area("passage", "The Matrix is a 1999 movie starring Keanu Reeves.")
+
+            # Create a text input to input the question.
+            question = st.text_input("question", "When did the Matrix come out?")
+
+            # Use the predictor to find the answer.
+            result = predictor.predict(question, passage)
+
+            # From the result, we want "best_span", "question_tokens", and "passage_tokens"
+            start, end = result["best_span"]
+            question_tokens = result["question_tokens"]
+            passage_tokens = result["passage_tokens"]
+
+            # We want to render the paragraph with the answer highlighted.
+            # We'll do that using `st.markdown`. In particular, for each token
+            # if it's part of the answer span we'll **bold** it. Otherwise we'll
+            # leave it as it.
+            mds = [f"**{token}**" if start <= i <= end else token
+                for i, token in enumerate(passage_tokens)]
+
+            # And then we'll just concatenate them with spaces.
+            st.markdown(" ".join(mds))
+
+            # We'd also like to make a heatmap of the passage-question attention.
+            # We'll use plt.imshow() for that.
+            attention = result["passage_question_attention"]
+
+            fig, ax = plt.subplots()
+            plt.imshow(attention)
+
+            # Make sure to show every tick
+            ax.set_xticks(np.arange(len(question_tokens)))
+            ax.set_yticks(np.arange(len(passage_tokens)))
+
+            # Use the tokens as the labels
+            ax.set_xticklabels(question_tokens)
+            ax.set_yticklabels(passage_tokens)
+
+            # And add it to our output
+            st.pyplot()
+
+
+
+        
+
 
 
                     
