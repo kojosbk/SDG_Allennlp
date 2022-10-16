@@ -268,26 +268,36 @@ def main():
 
                     CSVButton = download_button(
                         df,
-                        "File.csv",
+                        "Summarized_Dataframe.csv",
                         "Download to CSV",
                     )
 
         if choose == "-Q n A":
-            st.markdown('Using BART and T5 transformer model')
-            st.header("AllenNLP Demo")
+            st.header("-Question & Anwser")
             from allennlp.predictors.predictor import Predictor
-            # Load the pretrained BiDAF model for question answering.
-            # (It's big, don't do this over dial-up.)
-            # Use st.cache so that it doesn't reload when you change the inputs.
-            predictor = Predictor.from_path("C:/Users/Silas_Dell/Downloads/Compressed/bidaf-elmo.2021-02-11.tar_2.gz")
-                # ignore_hash=True  # the Predictor is not hashable
-
+            predictor = Predictor.from_path("https://storage.googleapis.com/allennlp-public-models/bidaf-model-2020.03.19.tar.gz")
 
             # Create a text area to input the passage.
-            passage = st.text_area("passage", "The Matrix is a 1999 movie starring Keanu Reeves.")
+            passage = st.text_area("Passage", """Europe’s largest oil refinery suffered a malfunction, a potential source of jitters for the continent’s refined fuels market where supply has already been hit by industrial action.
+
+            The compressor of fluid catalytic cracker unit 2 tripped on Oct. 12 due to the loss of power supply, according to a fire safety alert from the region’s Rjinmond Veilig service. Known as FCC units, the conversion plants are typically used to make refined products such as gasoline.
+
+            Shell Plc’s Pernis plant near Rotterdam has been flaring elevated amounts of gas following the incident, triggering 200 complaints from the public, DCMR, an environmental regulator, said in a notice on its website. The plant is also an important source of diesel within Europe.
+
+            The continent can ill afford material disruption to refined petroleum supply, given a European Union ban on purchases from Russia that’s due to start in early February. Strikes over pay in France have knocked out a swath of the nation’s fuelmaking, crunching supply.
+
+            BP Plc is carrying out planned work on the FCC at its Rotterdam refinery, which is next to Pernis in Europe in terms of size.
+
+            Read our blog on the European energy crisis
+
+            Shell said in a statement that governments have been informed about the incident, but didn’t elaborate on what processing capacity was affected or what it would mean for fuel supply.
+
+            “I can only tell you that we expect the nuisance will continue for the time being and that try to minimize the nuisance for the people in the vicinity,” a Shell spokesman said.
+
+            — With assistance by April Roach, Rachel Graham and Jack Wittels""")
 
             # Create a text input to input the question.
-            question = st.text_input("question", "When did the Matrix come out?")
+            question = st.text_input("Question", "What technology was used?")
 
             # Use the predictor to find the answer.
             result = predictor.predict(question, passage)
@@ -305,34 +315,42 @@ def main():
                 for i, token in enumerate(passage_tokens)]
 
             # And then we'll just concatenate them with spaces.
-            st.markdown(" ".join(mds))
+            if st.button("Summarize"):
+                st.write("Answer : "+result["best_span_str"])
+                st.markdown(" ".join(mds))
 
-            # We'd also like to make a heatmap of the passage-question attention.
-            # We'll use plt.imshow() for that.
-            attention = result["passage_question_attention"]
+            title_SOre = """
+            <div style="background-color:#eebd8a;padding:10px;border-radius:10px;margin:10px;border-style:solid; border-color:#000000; padding: 1em;">
+            <h3 style="color:black;text-align:center;">OR \nClick below to use a data frame that contains news stories on the Shell Corporation from various news sources.</h3>
+            """
+            st.markdown(title_SOre, unsafe_allow_html=True)
 
-            fig, ax = plt.subplots()
-            plt.imshow(attention)
+            c29, c30, c31 = st.columns([1, 6, 1])
 
-            # Make sure to show every tick
-            ax.set_xticks(np.arange(len(question_tokens)))
-            ax.set_yticks(np.arange(len(passage_tokens)))
+        with c30:
 
-            # Use the tokens as the labels
-            ax.set_xticklabels(question_tokens)
-            ax.set_yticklabels(passage_tokens)
+            uploaded_file = st.file_uploader(
+                "",
+                key="1",
+                help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
+            )
 
-            # And add it to our output
-            st.pyplot()
+            if uploaded_file is not None:
+                file_container = st.expander("Check your uploaded .csv")
+                shows = pd.read_csv(uploaded_file)
+                uploaded_file.seek(0)
+                file_container.write(shows)
 
+            else:
+                st.info(
+                    f"""
+                        👆 Upload a .csv file first. Sample to try: [biostats.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/biostats.csv)
+                        """
+                )
 
-
-        
-
-
-
-                    
- 
+                st.stop()
+    if st.button("Summarized"):
+        st.write(shows)
 
     if page_selection == "About us":
         with st.sidebar:
