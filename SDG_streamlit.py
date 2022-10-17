@@ -13,7 +13,11 @@ from transformers import BartTokenizer, BartForConditionalGeneration
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 # from allennlp import pretrained
 import matplotlib.pyplot as plt
-
+# from gensim.summarization import summarize
+from sumy.parsers.plaintext import PlaintextParser
+from sumy.nlp.tokenizers import Tokenizer
+from sumy.summarizers.lex_rank import LexRankSummarizer
+from allennlp.predictors.predictor import Predictor
 
 ###################################
 
@@ -25,6 +29,7 @@ from functionforDownloadButtons import download_button
 from utils.data_loader import load_movie_titles
 from recommenders.collaborative_based import collab_model
 from recommenders.content_based import content_model
+
 
 def set_bg_hack(main_bg):
     '''
@@ -85,14 +90,8 @@ right: 2rem;
 }}
 </style>
 """
-import streamlit as st
-# from gensim.summarization import summarize
-from sumy.parsers.plaintext import PlaintextParser
-from sumy.nlp.tokenizers import Tokenizer
-from sumy.summarizers.lex_rank import LexRankSummarizer
-st.markdown(page_bg_img, unsafe_allow_html=True)
 
-title_list = load_movie_titles('resources/data/movies.csv')
+st.markdown(page_bg_img, unsafe_allow_html=True)
 
 # App declaration
 def main():
@@ -262,7 +261,7 @@ def main():
 
                 df = pd.DataFrame(data[["Summrized Text","text"]])
 
-                c29, c30, c31 = st.columns([1, 1, 2])
+                c29, c32, c31 = st.columns([1, 1, 2])
 
                 with c29:
 
@@ -274,7 +273,7 @@ def main():
 
         if choose == "-Q n A":
             st.header("-Question & Anwser")
-            from allennlp.predictors.predictor import Predictor
+
             predictor = Predictor.from_path("https://storage.googleapis.com/allennlp-public-models/bidaf-model-2020.03.19.tar.gz")
 
             # Create a text area to input the passage.
@@ -315,7 +314,7 @@ def main():
                 for i, token in enumerate(passage_tokens)]
 
             # And then we'll just concatenate them with spaces.
-            if st.button("Summarize"):
+            if st.button("Find Answer"):
                 st.write("Answer : "+result["best_span_str"])
                 st.markdown(" ".join(mds))
 
@@ -327,43 +326,183 @@ def main():
 
             c29, c30, c31 = st.columns([1, 6, 1])
 
-        with c30:
+            with c30:
 
-            uploaded_file = st.file_uploader(
-                "",
-                key="1",
-                help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
-            )
-
-            if uploaded_file is not None:
-                file_container = st.expander("Check your uploaded .csv")
-                shows = pd.read_csv(uploaded_file)
-                uploaded_file.seek(0)
-                file_container.write(shows)
-
-            else:
-                st.info(
-                    f"""
-                        👆 Upload a .csv file first. Sample to try: [biostats.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/biostats.csv)
-                        """
+                uploaded_file = st.file_uploader(
+                    "",
+                    key="1",
+                    help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
                 )
 
-                st.stop()
-    if st.button("Summarized"):
-        st.write(shows)
+                if uploaded_file is not None:
+                    file_container = st.expander("Check your uploaded .csv")
+                    shows = pd.read_csv(uploaded_file)
+                    uploaded_file.seek(0)
+                    file_container.write(shows)
 
-    if page_selection == "About us":
-        with st.sidebar:
-            choose = option_menu("About us:", ["-Developer Info","-Contact info"],
-                                icons=['tree', 'kanban'],
-                                menu_icon="app-indicator", default_index=0,
-                                styles={
-                "container": {"padding": "5!important", "background-color": "#f1f2f6"},
-                "icon": {"color": "#eebd8a", "font-size": "25px"}, 
-                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                "nav-link-selected": {"background-color": "#585858"},		
-                    }
-                    )   
+                else:
+                    st.info(
+                        f"""
+                            👆 Upload a .csv file first. Sample to try: [ShellData.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/ShellData.csv)
+                            """
+                    )
+
+                    st.stop()
+            option = st.selectbox('Select Your questions:',('what is the cost and monetary value', 'what technology was used?', 'what resources used?'))
+            st.write('You selected:', option)
+            if st.button("Answer question"):
+
+                def qesAns(df,questions = option):
+                    df = df.head(5)
+                    # """question and answer node meant to produce answers to artiles in a dataframe
+
+                    # Args:
+                    #     data: Data containing a text column.
+                    # Returns:
+                    #     data: a dataframe answering the asked question based on the articles in each row 
+                    # """
+                    def qestions(df,column,question):
+                        result = []
+                        for i in range(len(df[column])):
+                            result.append(predictor.predict(passage=df[column][i], question=question)["best_span_str"])
+                        return result
+
+                    df[questions] = qestions(df,column= "text", question = questions)
+                    return df[questions]
+                res = qesAns(shows,questions= option)
+                st.write(res)
+                df = pd.DataFrame(res)
+
+                c29, c33, c31 = st.columns([1, 1, 2])
+
+                with c29:
+
+                    CSVButton = download_button(
+                        df,
+                        "Summarized_Dataframe.csv",
+                        "Download to CSV",
+                    )
+                st.stop()
+ 
+        if choose == "-Entity recognition":
+            st.header("Locations and Orgnizations") 
+            c29, c30, c31 = st.columns([1, 6, 1])
+
+            with c30:
+
+                uploaded_file = st.file_uploader(
+                    "",
+                    key="1",
+                    help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
+                )
+
+                if uploaded_file is not None:
+                    file_container = st.expander("Check your uploaded .csv")
+                    shows = pd.read_csv(uploaded_file)
+                    uploaded_file.seek(0)
+                    file_container.write(shows)
+
+                else:
+                    st.info(
+                        f"""
+                            👆 Upload a .csv file first. Sample to try: [ShellData.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/ShellData.csv)
+                            """
+                    )
+
+            # option = st.selectbox('Select Your questions:',('what is the cost and monetary value', 'what technology was used?', 'what resources used?'))
+            # st.write('You selected:', option)
+            if st.button("Find Locations and Orgnizations"):
+                nlp_models = [
+                    # { 'name' : 'ner-model',
+                    # 'url': 'C:/Users/Silas_Dell/Downloads/Compressed/ner-elmo.2021-02-12.tar.gz'
+                    # },
+                    { 'name' : 'ner-elmo',
+                        'url' : 'https://storage.googleapis.com/allennlp-public-models/ner-elmo.2021-02-12.tar.gz'
+                    },
+                ]
+                for nlp_model in nlp_models:
+                    nlp_model['model'] = Predictor.from_path(nlp_model['url'])
+
+                def locationOrganization(train):
+                    train = train.head(3)
+                    def entity_recognition (sentence):
+                        location = []
+                        for nlp_model in nlp_models:
+                            results =  nlp_model['model'].predict(sentence=sentence)
+                            for word, tag in zip(results["words"], results["tags"]):
+                                if tag != 'U-LOC'and tag != 'B-LOC':
+                                    continue
+                                else:
+                                    # print([word])#(f"{word}")
+                                    location.append(word)
+                            # print()
+                            return location
+
+                    def entity_recognition_pe(sentence):
+                        organisation = []
+                        for nlp_model in nlp_models:
+                            results =  nlp_model['model'].predict(sentence=sentence)
+                            for word, tag in zip(results["words"], results["tags"]):
+                                if tag != 'U-ORG' and tag != 'B-ORG':
+                                    continue
+                                else:
+                                    # print([word])#(f"{word}")
+                                    organisation.append(word)
+                            # print()
+                            return organisation
+                    result = []
+                    for i in range(len(train["text"])):
+                        result.append(list(set(entity_recognition(train["text"][i]))))
+                    re1 = []
+                    for i in range(len(train["text"])):
+                        re1.append(list(set(entity_recognition_pe(train["text"][i]))))
+                    train["location"]=result
+                    train["organisation"]=re1
+                    train['location'] = [', '.join(map(str, l)) for l in train['location']]
+                    train['organisation'] = [', '.join(map(str, l)) for l in train['organisation']]
+                    return train[["text","location","organisation"]]
+                res1 = locationOrganization(shows)
+                st.write(res1)
+                df = pd.DataFrame(res1)
+
+                c87, c33, c31 = st.columns([1, 5, 2])
+
+                with c33:
+
+                    CSVButton = download_button(
+                        df,
+                        "Locations_and_Org_Dataframe.csv",
+                        "Download to CSV",
+                    ) 
+                op_ratings = st.radio("Map Data",("Locations","exit"))
+
+                if op_ratings == "Locations":
+                    #if rating_option == "Top 10 users by number of ratings":
+                    st.image('resources/imgs/map.png',use_column_width=True)  
+                op_rating = st.radio("Bar chart",("Top 20 Organizations","exit."))
+
+                if op_rating == "Top 20 Organizations":
+                    #if rating_option == "Top 10 users by number of ratings":
+                    st.image('resources/imgs/maps.png',use_column_width=True) 
+
+
+
+
+                            
+            if page_selection == "About us":
+                with st.sidebar:
+                    choose = option_menu("About us:", ["-Developer Info","-Contact info"],
+                                        icons=['tree', 'kanban'],
+                                        menu_icon="app-indicator", default_index=0,
+                                        styles={
+                        "container": {"padding": "5!important", "background-color": "#f1f2f6"},
+                        "icon": {"color": "#eebd8a", "font-size": "25px"}, 
+                        "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
+                        "nav-link-selected": {"background-color": "#585858"},		
+                            }
+                            )  
+ 
+
     if page_selection == "Contact us":
         with st.sidebar:
             choose = option_menu("Contact us", ["-Interactive online form"],
