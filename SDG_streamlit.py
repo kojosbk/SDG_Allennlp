@@ -156,7 +156,10 @@ def main():
                     }
                     )
         if choose == "-Text summarisation":
-            # st.markdown('Using BART and T5 transformer model')
+            title_SOts = """
+            <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+            <h3 style="color:black;text-align:center;">Text summarisation"""     
+            st.markdown(title_SOts, unsafe_allow_html=True) 
 
             model = "BART"#st.selectbox('Select the model', ('T5', 'BART'))
 
@@ -295,7 +298,10 @@ def main():
                     )
 
         if choose == "-Q n A":
-            st.header("-Question & Anwser")
+            title_SOqa = """
+            <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+            <h3 style="color:black;text-align:center;">Question and Answer"""     
+            st.markdown(title_SOqa, unsafe_allow_html=True) 
 
             predictor = Predictor.from_path("https://storage.googleapis.com/allennlp-public-models/bidaf-model-2020.03.19.tar.gz")
 
@@ -408,7 +414,11 @@ def main():
                 st.stop()
  
         if choose == "-Entity recognition":
-            st.header("Locations and Orgnizations") 
+            title_SOer = """
+            <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+            <h3 style="color:black;text-align:center;">Locations and Orgnizations"""     
+            st.markdown(title_SOer, unsafe_allow_html=True) 
+
             c29, c30, c31 = st.columns([1, 6, 1])
 
             with c30:
@@ -512,19 +522,18 @@ def main():
 
 
                             
-            if page_selection == "About us":
-                with st.sidebar:
-                    choose = option_menu("About us:", ["-Developer Info","-Contact info"],
-                                        icons=['tree', 'kanban'],
-                                        menu_icon="app-indicator", default_index=0,
-                                        styles={
-                        "container": {"padding": "5!important", "background-color": "#f1f2f6"},
-                        "icon": {"color": "#eebd8a", "font-size": "25px"}, 
-                        "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
-                        "nav-link-selected": {"background-color": "#585858"},		
+    if page_selection == "About us":
+        with st.sidebar:
+            choose = option_menu("About us:", ["-Developer Info","-Contact info"],
+                                icons=['tree', 'kanban'],
+                                menu_icon="app-indicator", default_index=0,
+                                styles={
+                "container": {"padding": "5!important", "background-color": "#f1f2f6"},
+                "icon": {"color": "#eebd8a", "font-size": "25px"}, 
+                "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
+                "nav-link-selected": {"background-color": "#585858"},		
                             }
                             )  
- 
 
     if page_selection == "Contact us":
         with st.sidebar:
@@ -537,7 +546,12 @@ def main():
                 "nav-link": {"font-size": "16px", "text-align": "left", "margin":"0px", "--hover-color": "#eee"},
                 "nav-link-selected": {"background-color": "#585858"},		
                     }
-                    )  
+                    ) 
+        if choose == "-Interactive online form":
+            title_SOio = """
+            <iframe src="https://forms.gle/kbnoWf1mwDUk4boZ7" style="border:0px #ffffff none;" name="myiFrame" scrolling="no" frameborder="1" marginheight="0px" marginwidth="0px" height="600px" width="700px" allowfullscreen></iframe>
+            """     
+            st.markdown(title_SOio, unsafe_allow_html=True)  
         if choose == "Ratings":
             st.image('resources/imgs/EDA6.png',use_column_width=True)
 
