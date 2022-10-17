@@ -65,7 +65,7 @@ def get_img_as_base64(file):
         data = f.read()
     return base64.b64encode(data).decode()
 
-img = get_img_as_base64("image.png")
+img = get_img_as_base64("resources\imgs\Copy of Updated Presentation.png")
 
 page_bg_img = f"""
 <style>
@@ -118,8 +118,31 @@ def main():
                 "nav-link-selected": {"background-color": "#585858"},		
                     }
                     )
-
-
+        if choose == "-Motive behind App":
+                title_SOm = """
+                <div style="padding:10px;border-radius:10px;margin:10px;border-style:solid; border-color:#000000; padding: 1em;">
+                <h3 style="color:black;text-align:center;">A study-based project that uses Shell as a foundation for proof of concept. 
+                \nThe overall goal of the app is to investigate the possibility of utilising data science to gather 
+                and analyse information about a particular organisation, corporation, or nation
+                 to determine how well they are performing in relation to the Sustainable Development Goals of the United Nations.</h3>
+                """
+                title_SOmh = """
+                <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+                <h3 style="color:black;text-align:center;">Motive behind App"""     
+                st.markdown(title_SOmh, unsafe_allow_html=True)           
+                st.markdown(title_SOm, unsafe_allow_html=True)
+        if choose == "-Summary of the functions":
+                title_SOsf = """
+                <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+                <h3 style="color:black;text-align:center;">Summary of the functions"""     
+                st.markdown(title_SOsf, unsafe_allow_html=True)    
+                title_SOsft = """
+                <div style="padding:10px;border-radius:10px;margin:10px; border-color:#000000; padding: 1em;">
+                <h3 style="color:black;text-align:center;"> ---------------------------------------------- 
+                \nText Summrization - Without affecting the article's substance, the text summary tool draws out the most crucial details from a paragraph.
+                \nQuestion & Answer - Users can ask questions that will be addressed in the articles using the question-answer (Q&A) feature.
+                \nName Entity Recognition - By using the named entity recognition (NER) capability, it is possible to determine whether any entities have ever been connected to Shell Oil Company. Currently, we are only focusing on businesses and locations that are mentioned in the articles.""" 
+                st.markdown(title_SOsft, unsafe_allow_html=True)                        
     if page_selection == "3 Functionality Tabs":
         with st.sidebar:
             choose = option_menu("Functionality Tabs", ["-Text summarisation","-Q n A","-Entity recognition"],
@@ -133,9 +156,9 @@ def main():
                     }
                     )
         if choose == "-Text summarisation":
-            st.markdown('Using BART and T5 transformer model')
+            # st.markdown('Using BART and T5 transformer model')
 
-            model = st.selectbox('Select the model', ('T5', 'BART'))
+            model = "BART"#st.selectbox('Select the model', ('T5', 'BART'))
 
             if model == 'BART':
                 _num_beams = 4
@@ -152,15 +175,15 @@ def main():
                 _max_length = 200
                 _early_stopping = True
 
-            col1, col2, col3 = st.columns(3)
-            _num_beams = col1.number_input("num_beams", value=_num_beams)
-            _no_repeat_ngram_size = col2.number_input("no_repeat_ngram_size", value=_no_repeat_ngram_size)
-            _length_penalty = col3.number_input("length_penalty", value=_length_penalty)
+            # col1, col2, col3 = st.columns(3)
+            _num_beams = 4#col1.number_input("num_beams", value=_num_beams)
+            _no_repeat_ngram_size = 3#col2.number_input("no_repeat_ngram_size", value=_no_repeat_ngram_size)
+            _length_penalty = 2#col3.number_input("length_penalty", value=_length_penalty)
 
             col1, col2, col3 = st.columns(3)
-            _min_length = col1.number_input("min_length", value=_min_length)
-            _max_length = col2.number_input("max_length", value=_max_length)
-            _early_stopping = col3.number_input("early_stopping", value=_early_stopping)
+            _min_length = col1.number_input("Minimum length of summarization", value=_min_length)
+            _max_length = col3.number_input("Maximum length summarization", value=_max_length)
+            _early_stopping = 1#col3.number_input("early_stopping", value=_early_stopping)
 
             text = st.text_area('Text Input')
 
