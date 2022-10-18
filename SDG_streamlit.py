@@ -419,31 +419,31 @@ def main():
             <h3 style="color:black;text-align:center;">Locations and Orgnizations"""     
             st.markdown(title_SOer, unsafe_allow_html=True) 
 
-            c29, c30, c31 = st.columns([1, 6, 1])
+            # c29, c30, c31 = st.columns([1, 6, 1])
 
-            with c30:
+            # with c30:
 
-                uploaded_file = st.file_uploader(
-                    "",
-                    key="1",
-                    help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
-                )
+            #     uploaded_file = st.file_uploader(
+            #         "",
+            #         key="1",
+            #         help="To activate 'wide mode', go to the hamburger menu > Settings > turn on 'wide mode'",
+            #     )
 
-                if uploaded_file is not None:
-                    file_container = st.expander("Check your uploaded .csv")
-                    shows = pd.read_csv(uploaded_file)
-                    shows = shows.drop_duplicates(subset=['text'], keep='last')
-                    shows.dropna(subset=['text'], inplace=True)
-                    shows.reset_index(inplace=True)
-                    uploaded_file.seek(0)
-                    file_container.write(shows)
+            #     if uploaded_file is not None:
+            #         file_container = st.expander("Check your uploaded .csv")
+            #         shows = pd.read_csv(uploaded_file)
+            #         shows = shows.drop_duplicates(subset=['text'], keep='last')
+            #         shows.dropna(subset=['text'], inplace=True)
+            #         shows.reset_index(inplace=True)
+            #         uploaded_file.seek(0)
+            #         file_container.write(shows)
 
-                else:
-                    st.info(
-                        f"""
-                            👆 Upload a .csv file first. Sample to try: [ShellData.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/ShellData.csv)
-                            """
-                    )
+            #     else:
+            #         st.info(
+            #             f"""
+            #                 👆 Upload a .csv file first. Sample to try: [ShellData.csv](https://people.sc.fsu.edu/~jburkardt/data/csv/ShellData.csv)
+            #                 """
+            #         )
 
 
             if st.button("Find Locations and Orgnizations"):
@@ -452,154 +452,155 @@ def main():
                         'url' : 'https://storage.googleapis.com/allennlp-public-models/ner-elmo.2021-02-12.tar.gz'
                     },
                 ]
+                shows = pd.read_csv("shell_merged.csv")
                 for nlp_model in nlp_models:
                     nlp_model['model'] = Predictor.from_path(nlp_model['url'])
-                def locationOrganization(train):
-                        train = train.head(5)
-                        train = train.drop_duplicates(subset=['text'], keep='last')
-                        def entity_recognition (sentence):
-                            location = []
-                            for nlp_model in nlp_models:
-                                results =  nlp_model['model'].predict(sentence=sentence)
-                                for word, tag in zip(results["words"], results["tags"]):
-                                    if tag != 'U-LOC'and tag != 'B-LOC':
-                                        continue
-                                    else:
-                                        # print([word])#(f"{word}")
-                                        location.append(word)
-                                # print()
-                                return location
+                    def locationOrganization(train):
+                            train = train.head(1)
+                            train = train.drop_duplicates(subset=['text'], keep='last')
+                            def entity_recognition (sentence):
+                                location = []
+                                for nlp_model in nlp_models:
+                                    results =  nlp_model['model'].predict(sentence=sentence)
+                                    for word, tag in zip(results["words"], results["tags"]):
+                                        if tag != 'U-LOC'and tag != 'B-LOC':
+                                            continue
+                                        else:
+                                            # print([word])#(f"{word}")
+                                            location.append(word)
+                                    # print()
+                                    return location
 
-                        def entity_recognition_pe(sentence):
-                            organisation = []
-                            for nlp_model in nlp_models:
-                                results =  nlp_model['model'].predict(sentence=sentence)
-                                for word, tag in zip(results["words"], results["tags"]):
-                                    if tag != 'U-ORG' and tag != 'B-ORG':
-                                        continue
-                                    else:
-                                        # print([word])#(f"{word}")
-                                        organisation.append(word)
-                                # print()
-                                return organisation
-                        result = []
-                        for i in range(len(train["text"])):
-                            result.append(list(set(entity_recognition(train["text"][i]))))
-                        re1 = []
-                        for i in range(len(train["text"])):
-                            re1.append(list(set(entity_recognition_pe(train["text"][i]))))
-                        train["location"]=result
-                        train["organisation"]=re1
-                        train['location'] = [', '.join(map(str, l)) for l in train['location']]
-                        train['organisation'] = [', '.join(map(str, l)) for l in train['organisation']]
-                        return train[["text","location","organisation"]]
-                res1 = locationOrganization(shows)
-                st.write(res1)
-                df = pd.DataFrame(res1)
+                            def entity_recognition_pe(sentence):
+                                organisation = []
+                                for nlp_model in nlp_models:
+                                    results =  nlp_model['model'].predict(sentence=sentence)
+                                    for word, tag in zip(results["words"], results["tags"]):
+                                        if tag != 'U-ORG' and tag != 'B-ORG':
+                                            continue
+                                        else:
+                                            # print([word])#(f"{word}")
+                                            organisation.append(word)
+                                    # print()
+                                    return organisation
+                            result = []
+                            for i in range(len(train["text"])):
+                                result.append(list(set(entity_recognition(train["text"][i]))))
+                            re1 = []
+                            for i in range(len(train["text"])):
+                                re1.append(list(set(entity_recognition_pe(train["text"][i]))))
+                            train["location"]=result
+                            train["organisation"]=re1
+                            train['location'] = [', '.join(map(str, l)) for l in train['location']]
+                            train['organisation'] = [', '.join(map(str, l)) for l in train['organisation']]
+                            return train[["text","location","organisation"]]
+                    res1 = locationOrganization(shows)
+                    st.write(res1)
+                    df = pd.DataFrame(res1)
 
-                c87, c33, c31 = st.columns([1, 5, 2])
+                    c87, c33, c31 = st.columns([1, 5, 2])
 
-                with c87:
+                    with c33:
 
-                    CSVButton = download_button(
-                        df,
-                        "Locations_and_Org_Dataframe.csv",
-                        "Download to CSV",
-                ) 
-                op_ratings = st.radio("Map Data",("Locations","exit"))
+                        CSVButton = download_button(
+                            df,
+                            "Locations_and_Org_Dataframe.csv",
+                            "Download to CSV",
+                    ) 
+                    op_ratings = st.radio("Map Data",("Locations","exit"))
 
-                if op_ratings == "Locations":
-                    def locvis(df):
-                        a_list = []
-                        a_list.extend(df['location'].tolist())
-                        x = ()
-                        for values in df.location.iteritems():
-                                x += values
-                        passage=str(x)
-                        passage1 = passage.replace("'", "")
-                        passage1 = ''.join([i for i in passage1 if not i.isdigit()])
-                        def entity_recognition (sentence):
-                            miscellaneous = []
-                            person = []
-                            organisation = []
-                            loc = []
-                            for nlp_model in nlp_models:
-                                results =  nlp_model['model'].predict(sentence=sentence)
-                                for word, tag in zip(results["words"], results["tags"]):
-                                    if tag != 'U-LOC':
-                                        continue
-                                    else:
-                                        loc.append(word)
-                                return loc
-                        coutries = entity_recognition (passage1)
-                        from pandas import DataFrame
-                        df = DataFrame (coutries,columns=['coutries'])
-                        item_counts = df["coutries"].value_counts()
-                        dfa = DataFrame (item_counts,columns=['coutries',"count"])
-                        dfa.drop(['count'], axis = 1, inplace = True)
-                        from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
-                        def get_continent(col):
-                            try:
-                                cn_a2_code =  country_name_to_country_alpha2(col)
-                            except:
-                                cn_a2_code = 'Unknown' 
-                            try:
-                                cn_continent = country_alpha2_to_continent_code(cn_a2_code)
-                            except:
-                                cn_continent = 'Unknown' 
-                            return (cn_a2_code, cn_continent)
-                        dfa.reset_index(inplace=True)
-                        dfa.rename(columns={'index': 'country','coutries': 'count'},
-                            inplace=True, errors='raise')
-                        import pycountry_convert as pc
-                        country_continent_name=[]
-                        for country in dfa['country']:
-                            try:
-                                country_alpha2 = pc.country_name_to_country_alpha2(country)
-                                country_continent_code = pc.country_alpha2_to_continent_code(country_alpha2)
-                                name = pc.convert_continent_code_to_continent_name(country_continent_code)
-                                country_continent_name.append(name)
-                            except:
-                                country_continent_name.append("Unknown")
-                                
-                        #     country_continent_name.append(name)
-
-                        dfa['region'] = country_continent_name
-                        # generate country code  based on country name 
-                        import pycountry 
-                        def alpha3code(column):
-                            CODE=[]
-                            for country in column:
+                    if op_ratings == "Locations":
+                        def locvis(df):
+                            a_list = []
+                            a_list.extend(df['location'].tolist())
+                            x = ()
+                            for values in df.location.iteritems():
+                                    x += values
+                            passage=str(x)
+                            passage1 = passage.replace("'", "")
+                            passage1 = ''.join([i for i in passage1 if not i.isdigit()])
+                            def entity_recognition (sentence):
+                                miscellaneous = []
+                                person = []
+                                organisation = []
+                                loc = []
+                                for nlp_model in nlp_models:
+                                    results =  nlp_model['model'].predict(sentence=sentence)
+                                    for word, tag in zip(results["words"], results["tags"]):
+                                        if tag != 'U-LOC':
+                                            continue
+                                        else:
+                                            loc.append(word)
+                                    return loc
+                            coutries = entity_recognition (passage1)
+                            from pandas import DataFrame
+                            df = DataFrame (coutries,columns=['coutries'])
+                            item_counts = df["coutries"].value_counts()
+                            dfa = DataFrame (item_counts,columns=['coutries',"count"])
+                            dfa.drop(['count'], axis = 1, inplace = True)
+                            from pycountry_convert import country_alpha2_to_continent_code, country_name_to_country_alpha2
+                            def get_continent(col):
                                 try:
-                                    code=pycountry.countries.get(name=country).alpha_3
-                                # .alpha_3 means 3-letter country code 
-                                # .alpha_2 means 2-letter country code
-                                    CODE.append(code)
+                                    cn_a2_code =  country_name_to_country_alpha2(col)
                                 except:
-                                    CODE.append('None')
-                            return CODE
-                        # create a column for code 
-                        dfa['CODE']=alpha3code(dfa.country)
-                        dfa.head()
-                        import plotly.express as px
+                                    cn_a2_code = 'Unknown' 
+                                try:
+                                    cn_continent = country_alpha2_to_continent_code(cn_a2_code)
+                                except:
+                                    cn_continent = 'Unknown' 
+                                return (cn_a2_code, cn_continent)
+                            dfa.reset_index(inplace=True)
+                            dfa.rename(columns={'index': 'country','coutries': 'count'},
+                                inplace=True, errors='raise')
+                            import pycountry_convert as pc
+                            country_continent_name=[]
+                            for country in dfa['country']:
+                                try:
+                                    country_alpha2 = pc.country_name_to_country_alpha2(country)
+                                    country_continent_code = pc.country_alpha2_to_continent_code(country_alpha2)
+                                    name = pc.convert_continent_code_to_continent_name(country_continent_code)
+                                    country_continent_name.append(name)
+                                except:
+                                    country_continent_name.append("Unknown")
+                                    
+                            #     country_continent_name.append(name)
 
-                        np.random.seed(12)
-                        gapminder = dfa
-                        gapminder['counts'] = np.random.uniform(low=100000, high=200000, size=len(gapminder)).tolist()
+                            dfa['region'] = country_continent_name
+                            # generate country code  based on country name 
+                            import pycountry 
+                            def alpha3code(column):
+                                CODE=[]
+                                for country in column:
+                                    try:
+                                        code=pycountry.countries.get(name=country).alpha_3
+                                    # .alpha_3 means 3-letter country code 
+                                    # .alpha_2 means 2-letter country code
+                                        CODE.append(code)
+                                    except:
+                                        CODE.append('None')
+                                return CODE
+                            # create a column for code 
+                            dfa['CODE']=alpha3code(dfa.country)
+                            dfa.to_csv("locations.csv")
+                            import plotly.express as px
 
-                        fig = px.choropleth(gapminder, locations="CODE",
-                                            locationmode='ISO-3',
-                                            color="count", 
-                                            hover_name="CODE",
-                                            color_continuous_scale=px.colors.sequential.Blues)
+                            np.random.seed(12)
+                            gapminder = dfa
+                            gapminder['counts'] = np.random.uniform(low=100000, high=200000, size=len(gapminder)).tolist()
 
-                        st.plotly_chart(fig, use_container_width=True)
-                    st.write(locvis(df) )
-                op_rating = st.radio("Bar chart",("Top 20 Organizations","exit."))
+                            fig = px.choropleth(gapminder, locations="CODE",
+                                                locationmode='ISO-3',
+                                                color="count", 
+                                                hover_name="CODE",
+                                                color_continuous_scale=px.colors.sequential.Blues)
+                            st.write(dfa[["country","count"]])
+                            st.plotly_chart(fig, use_container_width=True)
+                        st.write(locvis(df) )
+                    op_rating = st.radio("Bar chart",("Top 20 Organizations","exit."))
 
-                if op_rating == "Top 20 Organizations":
-                    #if rating_option == "Top 10 users by number of ratings":
-                    st.image('resources/imgs/maps.png',use_column_width=True) 
+                    if op_rating == "Top 20 Organizations":
+                        #if rating_option == "Top 10 users by number of ratings":
+                        st.image('resources/imgs/maps.png',use_column_width=True) 
 
 
 
