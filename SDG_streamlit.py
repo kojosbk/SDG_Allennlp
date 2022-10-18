@@ -456,8 +456,10 @@ def main():
                 for nlp_model in nlp_models:
                     nlp_model['model'] = Predictor.from_path(nlp_model['url'])
                     def locationOrganization(train):
-                            train = train.head(1)
+                            train = train.head(30)
                             train = train.drop_duplicates(subset=['text'], keep='last')
+                            train.dropna(subset=['text'], inplace=True)
+                            train.reset_index(inplace=True)
                             def entity_recognition (sentence):
                                 location = []
                                 for nlp_model in nlp_models:
@@ -591,9 +593,15 @@ def main():
                             fig = px.choropleth(gapminder, locations="CODE",
                                                 locationmode='ISO-3',
                                                 color="count", 
-                                                hover_name="CODE",
+                                                hover_name="country",
                                                 color_continuous_scale=px.colors.sequential.Blues)
-                            st.write(dfa[["country","count"]])
+                            dfa.rename(columns={'country': 'locations'},
+                                        inplace=True, errors='raise')
+                            figi = px.bar(dfa.head(5), x='count', y="locations", color='count', title='Locations shell is involved with',
+                            template='plotly_white', labels={'ngram': 'Bigram', 'count': 'Count'}).update_xaxes(categoryorder='total descending')
+                            # fig.show()
+                            st.write(dfa[["locations","count"]])
+                            st.plotly_chart(figi, use_container_width=True)
                             st.plotly_chart(fig, use_container_width=True)
                         st.write(locvis(df) )
                     op_rating = st.radio("Bar chart",("Top 20 Organizations","exit."))
