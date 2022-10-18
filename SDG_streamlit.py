@@ -432,6 +432,9 @@ def main():
                 if uploaded_file is not None:
                     file_container = st.expander("Check your uploaded .csv")
                     shows = pd.read_csv(uploaded_file)
+                    shows = shows.drop_duplicates(subset=['text'], keep='last')
+                    shows.dropna(subset=['text'], inplace=True)
+                    shows.reset_index(inplace=True)
                     uploaded_file.seek(0)
                     file_container.write(shows)
 
@@ -456,7 +459,8 @@ def main():
                 for nlp_model in nlp_models:
                     nlp_model['model'] = Predictor.from_path(nlp_model['url'])
                 def locationOrganization(train):
-                        train = train.head(1)
+                        train = train.head(5)
+                        train = train.drop_duplicates(subset=['text'], keep='last')
                         def entity_recognition (sentence):
                             location = []
                             for nlp_model in nlp_models:
